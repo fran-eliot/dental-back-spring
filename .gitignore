@@ -1,0 +1,81 @@
+# ========================
+# Maven
+# ========================
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+.mvn/timing.properties
+mvnw
+mvnw.cmd
+
+# ========================
+# Spring Boot
+# ========================
+# Archivos de logs y temporales
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# Base de datos embebida (si se usa H2 local)
+*.db
+*.mv.db
+*.h2.db
+
+# ========================
+# Configuración sensible
+# ========================
+# Evita subir ficheros con credenciales locales
+application-local.properties
+application-local.yml
+application-dev.properties
+application-dev.yml
+.env
+.env.local
+*.secret
+*.key
+
+# ========================
+# IDEs
+# ========================
+### STS / Eclipse ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+/build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+# ========================
+# Sistema operativo
+# ========================
+.DS_Store
+Thumbs.db
+
+# ========================
+# Otros
+# ========================
+HELP.md
