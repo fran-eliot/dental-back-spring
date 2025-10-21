@@ -1,8 +1,9 @@
-package com.clinica.controller;
+package com.clinica.dental_back_spring.controller;
 
-import com.clinica.entity.User;
-import com.clinica.repository.UserRepository;
-import com.clinica.security.JwtUtil;
+import com.clinica.dental_back_spring.enums.Role;
+import com.clinica.dental_back_spring.entity.User;
+import com.clinica.dental_back_spring.repository.UserRepository;
+import com.clinica.dental_back_spring.security.JwtUtil;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -33,7 +34,7 @@ public class AuthController {
         User u = User.builder()
                 .email(email)
                 .passwordHash(passwordEncoder.encode(password))
-                .role(com.clinica.entity.Role.PACIENTE)
+                .role(Role.PACIENTE)
                 .active(true)
                 .build();
         userRepo.save(u);

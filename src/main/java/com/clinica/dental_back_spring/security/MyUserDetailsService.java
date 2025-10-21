@@ -1,7 +1,7 @@
-package com.clinica.security;
+package com.clinica.dental_back_spring.security;
 
-import com.clinica.entity.User;
-import com.clinica.repository.UserRepository;
+import com.clinica.dental_back_spring.entity.User;
+import com.clinica.dental_back_spring.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.core.userdetails.UserDetailsService;

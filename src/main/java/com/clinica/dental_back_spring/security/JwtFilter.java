@@ -1,4 +1,4 @@
-package com.clinica.security;
+package com.clinica.dental_back_spring.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

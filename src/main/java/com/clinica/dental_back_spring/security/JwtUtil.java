@@ -1,4 +1,4 @@
-package com.clinica.security;
+package com.clinica.dental_back_spring.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;

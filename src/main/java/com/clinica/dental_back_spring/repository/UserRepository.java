@@ -1,6 +1,6 @@
-package com.clinica.repository;
+package com.clinica.dental_back_spring.repository;
 
-import com.clinica.entity.User;
+import com.clinica.dental_back_spring.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 

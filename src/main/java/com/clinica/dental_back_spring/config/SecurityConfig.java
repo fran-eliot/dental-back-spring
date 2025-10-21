@@ -1,11 +1,10 @@
-package com.clinica.config;
+package com.clinica.dental_back_spring.config;
 
-import com.clinica.security.JwtFilter;
-import com.clinica.security.JwtUtil;
-import com.clinica.security.MyUserDetailsService;
+import com.clinica.dental_back_spring.security.JwtFilter;
+import com.clinica.dental_back_spring.security.JwtUtil;
+import com.clinica.dental_back_spring.security.MyUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;

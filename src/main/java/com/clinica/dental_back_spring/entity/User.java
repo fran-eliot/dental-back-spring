@@ -1,5 +1,6 @@
-package com.clinica.entity;
+package com.clinica.dental_back_spring.entity;
 
+import com.clinica.dental_back_spring.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
 
