@@ -1,6 +1,5 @@
 package com.clinica.dental_back_spring.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -36,7 +35,6 @@ public class Treatment {
     private boolean visible = true;
 
     @OneToMany(mappedBy = "treatment", fetch = FetchType.LAZY)
-    @JsonIgnore
     private List<Appointment> appointments;
 }
 

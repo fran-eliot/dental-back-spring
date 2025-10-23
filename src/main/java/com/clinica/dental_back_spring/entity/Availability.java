@@ -33,7 +33,7 @@ public class Availability {
     private StatusAvailability status;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name= "slot_id")
+    @JoinColumn(name= "id_slots")
     private Slot slot;
 
 }

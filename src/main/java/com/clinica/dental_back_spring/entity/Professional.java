@@ -1,6 +1,5 @@
 package com.clinica.dental_back_spring.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -46,14 +45,13 @@ public class Professional {
 
     // Relación opcional con User (1-1)
     @OneToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "id_users")
     private User user;
 
     @OneToMany(mappedBy = "professional", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore
     private List<Availability> availabilities;
 
-    @OneToMany(mappedBy = "professional", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "professional",cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Appointment> appointments;
 
 
