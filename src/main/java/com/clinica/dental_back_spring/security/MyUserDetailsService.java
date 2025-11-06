@@ -22,7 +22,7 @@ public class MyUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getEmail())
-                .password(user.getPasswordHash())
+                .password(user.getPassword())
                 .roles(user.getRole().name()) // asume enum
                 .build();
     }
