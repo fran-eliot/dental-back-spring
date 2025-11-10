@@ -29,7 +29,7 @@ public class Patient {
     @Column(name = "last_name_patients")
     private String lastName;
 
-    @Column(name = "email_patients")
+    @Column(name = "email_patients", unique=true)
     private String email;
 
     @Column(name = "phone_patients")

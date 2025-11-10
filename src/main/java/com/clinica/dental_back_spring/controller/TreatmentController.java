@@ -5,22 +5,19 @@ import com.clinica.dental_back_spring.dto.TreatmentDTO;
 import com.clinica.dental_back_spring.dto.UpdateTreatmentRequest;
 import com.clinica.dental_back_spring.service.TreatmentService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/treatments")
-@Tag(name = "Treatments", description = "Gestión de tratamientos: listado, creación, edición y visibilidad")
+@RequestMapping("/treatments")
+@Tag(name = "Tratamientos", description = "Gestión de tratamientos de la clínica")
 public class TreatmentController {
 
     private final TreatmentService treatmentService;
@@ -29,116 +26,84 @@ public class TreatmentController {
         this.treatmentService = treatmentService;
     }
 
-    /**
-     * Listar tratamientos (opcional filtro texto y visibleOnly)
-     */
-    @Operation(summary = "Listar tratamientos",
-            description = "Devuelve la lista de tratamientos. Se puede filtrar por texto (nombre o tipo) y por visibilidad (visibleOnly=true).")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Lista de tratamientos",
-                    content = @Content(schema = @Schema(implementation = TreatmentDTO.class)))
-    })
+    // ==========================================================
+    // 🔹 GET /treatments?query=&visibleOnly=true
+    // ==========================================================
+    @Operation(summary = "Listar tratamientos", description = "Devuelve todos los tratamientos o filtra por nombre/tipo y visibilidad.")
+    @ApiResponse(responseCode = "200", description = "Listado obtenido correctamente")
     @GetMapping
     public ResponseEntity<List<TreatmentDTO>> list(
-            @Parameter(description = "Texto de búsqueda (opcional)") @RequestParam(required = false) String query,
-            @Parameter(description = "Mostrar solo tratamientos visibles (opcional)") @RequestParam(required = false) Boolean visibleOnly) {
-        List<TreatmentDTO> list = treatmentService.findAll(query, visibleOnly);
-        return ResponseEntity.ok(list);
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false, defaultValue = "false") boolean visibleOnly
+    ) {
+        List<TreatmentDTO> treatments = treatmentService.findAll(query, visibleOnly);
+        return ResponseEntity.ok(treatments);
     }
 
-    /**
-     * Obtener tratamiento por id
-     */
-    @Operation(summary = "Obtener tratamiento por id", description = "Devuelve los datos del tratamiento indicado por su ID.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Tratamiento encontrado",
-                    content = @Content(schema = @Schema(implementation = TreatmentDTO.class))),
-            @ApiResponse(responseCode = "404", description = "Tratamiento no encontrado",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{\"message\": \"Treatment not found\"}")))
-    })
+    // ==========================================================
+    // 🔹 GET /treatments/:id
+    // ==========================================================
+    @Operation(summary = "Obtener tratamiento por ID")
+    @ApiResponse(responseCode = "200", description = "Tratamiento encontrado")
+    @ApiResponse(responseCode = "404", description = "Tratamiento no encontrado", content = @Content)
     @GetMapping("/{id}")
-    public ResponseEntity<?> get(@Parameter(description = "ID del tratamiento", example = "1") @PathVariable Long id) {
+    public ResponseEntity<?> getById(@PathVariable Long id) {
         try {
             TreatmentDTO dto = treatmentService.findById(id);
             return ResponseEntity.ok(dto);
-        } catch (IllegalArgumentException ex) {
-            return ResponseEntity.status(404).body(java.util.Map.of("message", ex.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(Map.of("message", e.getMessage()));
         }
     }
 
-    /**
-     * Crear tratamiento
-     */
-    @Operation(summary = "Crear tratamiento", description = "Crea un nuevo tratamiento con los datos proporcionados.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Tratamiento creado",
-                    content = @Content(schema = @Schema(implementation = TreatmentDTO.class),
-                            examples = @ExampleObject(value = "{\"id\":1,\"name\":\"Limpieza\",\"type\":\"Preventivo\",\"duration\":30,\"price\":30.0,\"visible\":true}"))),
-            @ApiResponse(responseCode = "400", description = "Datos inválidos en la petición",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{\"message\": \"Validation error\"}")))
-    })
+    // ==========================================================
+    // 🔹 POST /treatments
+    // ==========================================================
+    @Operation(summary = "Crear tratamiento")
+    @ApiResponse(responseCode = "201", description = "Tratamiento creado correctamente")
+    @ApiResponse(responseCode = "400", description = "Error en los datos", content = @Content)
     @PostMapping
-    public ResponseEntity<?> create(
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "Datos para crear el tratamiento",
-                    required = true,
-                    content = @Content(schema = @Schema(implementation = CreateTreatmentRequest.class),
-                            examples = @ExampleObject(value = "{\"name\":\"Limpieza\",\"type\":\"Preventivo\",\"duration\":30,\"price\":30.0,\"visible\":true}"))
-            )
-            @Valid @RequestBody CreateTreatmentRequest req){
-        TreatmentDTO created = treatmentService.create(req);
-        return ResponseEntity.status(201).body(created);
+    public ResponseEntity<?> create(@Valid @RequestBody CreateTreatmentRequest req) {
+        try {
+            TreatmentDTO created = treatmentService.create(req);
+            return ResponseEntity.status(201).body(created);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 
-    /**
-     * Actualizar tratamiento
-     */
-    @Operation(summary = "Actualizar tratamiento", description = "Actualiza los campos del tratamiento indicado (actualización parcial).")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Tratamiento actualizado",
-                    content = @Content(schema = @Schema(implementation = TreatmentDTO.class))),
-            @ApiResponse(responseCode = "404", description = "Tratamiento no encontrado",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{\"message\": \"Treatment not found\"}")))
-    })
+    // ==========================================================
+    // 🔹 PUT /treatments/:id
+    // ==========================================================
+    @Operation(summary = "Actualizar tratamiento")
+    @ApiResponse(responseCode = "200", description = "Tratamiento actualizado correctamente")
+    @ApiResponse(responseCode = "404", description = "Tratamiento no encontrado", content = @Content)
     @PutMapping("/{id}")
-    public ResponseEntity<?>  update(
-            @Parameter(description = "ID del tratamiento", example = "1") @PathVariable Long id,
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "Campos para actualizar el tratamiento",
-                    content = @Content(schema = @Schema(implementation = UpdateTreatmentRequest.class),
-                            examples = @ExampleObject(value = "{\"name\":\"Limpieza profunda\",\"price\":45.0}"))
-            )
-            @Valid @RequestBody UpdateTreatmentRequest req) {
+    public ResponseEntity<?> update(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateTreatmentRequest req
+    ) {
         try {
             TreatmentDTO updated = treatmentService.update(id, req);
             return ResponseEntity.ok(updated);
-        } catch (IllegalArgumentException ex) {
-            return ResponseEntity.status(404).body(java.util.Map.of("message", ex.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(Map.of("message", e.getMessage()));
         }
     }
 
-    /**
-     * Borrado lógico de tratamiento (soft delete -> visible=false)
-     */
-    @Operation(summary = "Eliminar tratamiento (soft)", description = "Marca el tratamiento como no visible (soft delete).")
-    @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Tratamiento marcado como no visible"),
-            @ApiResponse(responseCode = "404", description = "Tratamiento no encontrado",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{\"message\": \"Treatment not found\"}")))
-    })
+    // ==========================================================
+    // 🔹 DELETE /treatments/:id (soft delete)
+    // ==========================================================
+    @Operation(summary = "Eliminar tratamiento", description = "Marca un tratamiento como no visible (soft delete).")
+    @ApiResponse(responseCode = "204", description = "Tratamiento marcado como no visible correctamente")
+    @ApiResponse(responseCode = "404", description = "Tratamiento no encontrado", content = @Content)
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(
-            @Parameter(description = "ID del tratamiento", example = "1") @PathVariable Long id)  {
+    public ResponseEntity<?> delete(@PathVariable Long id) {
         try {
             treatmentService.softDelete(id);
             return ResponseEntity.noContent().build();
-        } catch (IllegalArgumentException ex) {
-            return ResponseEntity.status(404).body(java.util.Map.of("message", ex.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(Map.of("message", e.getMessage()));
         }
     }
 }
-

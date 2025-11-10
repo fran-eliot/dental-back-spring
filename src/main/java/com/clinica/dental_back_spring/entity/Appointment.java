@@ -42,13 +42,13 @@ public class Appointment {
     private AppointmentStatus status;
 
     @Column(name = "cancellation_reason_appointments", columnDefinition = "TEXT")
-    private String notes;
+    private String cancellationReason;
 
     @Column(name = "date_appointments")
     private LocalDateTime date;
 
     @Column(name = "duration_minutes_appointments")
-    private int duration;
+    private Integer duration;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "created_by_appointments")

@@ -3,6 +3,7 @@ package com.clinica.dental_back_spring.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Entity
@@ -28,8 +29,8 @@ public class Treatment {
     @Column(name = "duration_minutes_treatments")
     private Integer duration;
 
-    @Column(name ="price_treatments")
-    private double price;
+    @Column(name ="price_treatments",precision=6,scale=2)
+    private BigDecimal price;
 
     @Column(name = "visible_to_patients_treatments")
     private boolean visible = true;

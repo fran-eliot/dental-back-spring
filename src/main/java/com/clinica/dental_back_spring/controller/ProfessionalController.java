@@ -5,22 +5,19 @@ import com.clinica.dental_back_spring.dto.ProfessionalDTO;
 import com.clinica.dental_back_spring.dto.UpdateProfessionalRequest;
 import com.clinica.dental_back_spring.service.ProfessionalService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/professionals")
-@Tag(name = "Professionals", description = "Gestión de profesionales: listado, creación, edición y borrado lógico")
+@RequestMapping("/professionals")
+@Tag(name = "Profesionales", description = "Gestión de profesionales de la clínica")
 public class ProfessionalController {
 
     private final ProfessionalService professionalService;
@@ -29,129 +26,81 @@ public class ProfessionalController {
         this.professionalService = professionalService;
     }
 
-    /**
-     * Listar profesionales (con filtro opcional)
-     */
-    @Operation(
-            summary = "Listar profesionales",
-            description = "Devuelve la lista de profesionales registrados. Puede filtrarse por texto en nombre o especialidad."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Lista de profesionales obtenida correctamente",
-                    content = @Content(schema = @Schema(implementation = ProfessionalDTO.class)))
-    })
+    // ==========================================================
+    // 🔹 GET /professionals?query=
+    // ==========================================================
+    @Operation(summary = "Listar profesionales", description = "Devuelve todos los profesionales o filtra por nombre o especialidad/licencia.")
+    @ApiResponse(responseCode = "200", description = "Listado obtenido correctamente")
     @GetMapping
-    public ResponseEntity<List<ProfessionalDTO>> list(
-            @Parameter(description = "Texto de búsqueda (opcional)") @RequestParam(required = false) String query) {
+    public ResponseEntity<List<ProfessionalDTO>> list(@RequestParam(required = false) String query) {
         List<ProfessionalDTO> list = professionalService.findAll(query);
         return ResponseEntity.ok(list);
     }
 
-    /**
-     * Obtener profesional por ID
-     */
-    @Operation(
-            summary = "Obtener profesional por ID",
-            description = "Devuelve los datos del profesional indicado por su identificador único."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Profesional encontrado",
-                    content = @Content(schema = @Schema(implementation = ProfessionalDTO.class))),
-            @ApiResponse(responseCode = "404", description = "Profesional no encontrado",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{\"message\": \"Professional not found\"}")))
-    })
+    // ==========================================================
+    // 🔹 GET /professionals/:id
+    // ==========================================================
+    @Operation(summary = "Obtener profesional por ID")
+    @ApiResponse(responseCode = "200", description = "Profesional encontrado")
+    @ApiResponse(responseCode = "404", description = "Profesional no encontrado", content = @Content)
     @GetMapping("/{id}")
-    public ResponseEntity<?> get(
-            @Parameter(description = "ID del profesional", example = "1") @PathVariable Long id) {
+    public ResponseEntity<?> getById(@PathVariable Long id) {
         try {
             ProfessionalDTO dto = professionalService.findById(id);
             return ResponseEntity.ok(dto);
-        } catch (IllegalArgumentException ex) {
-            return ResponseEntity.status(404).body(java.util.Map.of("message", ex.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(Map.of("message", e.getMessage()));
         }
     }
 
-    /**
-     * Crear nuevo profesional
-     */
-    @Operation(
-            summary = "Crear profesional",
-            description = "Crea un nuevo profesional en la base de datos con los datos proporcionados."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Profesional creado correctamente",
-                    content = @Content(schema = @Schema(implementation = ProfessionalDTO.class),
-                            examples = @ExampleObject(value = "{\"id\":1,\"firstName\":\"Laura\",\"lastName\":\"Gómez\",\"specialty\":\"Implantología\",\"active\":true}"))),
-            @ApiResponse(responseCode = "400", description = "Datos inválidos en la petición",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{\"message\": \"Validation error\"}")))
-    })
+    // ==========================================================
+    // 🔹 POST /professionals
+    // ==========================================================
+    @Operation(summary = "Crear profesional")
+    @ApiResponse(responseCode = "201", description = "Profesional creado correctamente")
+    @ApiResponse(responseCode = "400", description = "Error en los datos", content = @Content)
     @PostMapping
-    public ResponseEntity<?> create(
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "Datos para crear el profesional",
-                    required = true,
-                    content = @Content(schema = @Schema(implementation = CreateProfessionalRequest.class),
-                            examples = @ExampleObject(value = "{\"firstName\":\"Laura\",\"lastName\":\"Gómez\",\"specialty\":\"Implantología\"}"))
-            )
-            @Valid @RequestBody CreateProfessionalRequest req) {
-        ProfessionalDTO created = professionalService.create(req);
-        return ResponseEntity.status(201).body(created);
+    public ResponseEntity<?> create(@Valid @RequestBody CreateProfessionalRequest req) {
+        try {
+            ProfessionalDTO created = professionalService.create(req);
+            return ResponseEntity.status(201).body(created);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 
-    /**
-     * Actualizar profesional
-     */
-    @Operation(
-            summary = "Actualizar profesional",
-            description = "Actualiza los datos del profesional especificado. Solo se modifican los campos enviados."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Profesional actualizado correctamente",
-                    content = @Content(schema = @Schema(implementation = ProfessionalDTO.class))),
-            @ApiResponse(responseCode = "404", description = "Profesional no encontrado",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{\"message\": \"Professional not found\"}")))
-    })
+    // ==========================================================
+    // 🔹 PUT /professionals/:id
+    // ==========================================================
+    @Operation(summary = "Actualizar profesional")
+    @ApiResponse(responseCode = "200", description = "Profesional actualizado correctamente")
+    @ApiResponse(responseCode = "404", description = "Profesional no encontrado", content = @Content)
     @PutMapping("/{id}")
     public ResponseEntity<?> update(
-            @Parameter(description = "ID del profesional", example = "1") @PathVariable Long id,
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "Campos para actualizar el profesional",
-                    content = @Content(schema = @Schema(implementation = UpdateProfessionalRequest.class),
-                            examples = @ExampleObject(value = "{\"specialty\":\"Ortodoncia\",\"active\":true}"))
-            )
-            @Valid @RequestBody UpdateProfessionalRequest req) {
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateProfessionalRequest req
+    ) {
         try {
             ProfessionalDTO updated = professionalService.update(id, req);
             return ResponseEntity.ok(updated);
-        } catch (IllegalArgumentException ex) {
-            return ResponseEntity.status(404).body(java.util.Map.of("message", ex.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(Map.of("message", e.getMessage()));
         }
     }
 
-    /**
-     * Borrado lógico (soft delete)
-     */
-    @Operation(
-            summary = "Eliminar profesional (soft delete)",
-            description = "Marca el profesional como inactivo en lugar de eliminarlo físicamente de la base de datos."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Profesional marcado como inactivo"),
-            @ApiResponse(responseCode = "404", description = "Profesional no encontrado",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{\"message\": \"Professional not found\"}")))
-    })
+    // ==========================================================
+    // 🔹 DELETE /professionals/:id (soft delete)
+    // ==========================================================
+    @Operation(summary = "Eliminar profesional", description = "Marca un profesional como inactivo (soft delete).")
+    @ApiResponse(responseCode = "204", description = "Profesional desactivado correctamente")
+    @ApiResponse(responseCode = "404", description = "Profesional no encontrado", content = @Content)
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(
-            @Parameter(description = "ID del profesional", example = "1") @PathVariable Long id) {
+    public ResponseEntity<?> delete(@PathVariable Long id) {
         try {
             professionalService.softDelete(id);
             return ResponseEntity.noContent().build();
-        } catch (IllegalArgumentException ex) {
-            return ResponseEntity.status(404).body(java.util.Map.of("message", ex.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(Map.of("message", e.getMessage()));
         }
     }
 }

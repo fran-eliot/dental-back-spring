@@ -29,12 +29,12 @@ public class Professional {
     private String name;
 
     @Column(name= "last_name_professionals")
-    private String last_name;
+    private String lastName;
 
     @Column(name = "phone_professionals")
     private String phone;
 
-    @Column(name = "email_professionals")
+    @Column(name = "email_professionals",unique=true)
     private String email;
 
     @Column(name ="assigned_room_professionals")

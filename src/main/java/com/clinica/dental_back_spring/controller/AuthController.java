@@ -1,16 +1,17 @@
 package com.clinica.dental_back_spring.controller;
 
-import com.clinica.dental_back_spring.enums.Role;
 import com.clinica.dental_back_spring.entity.User;
+import com.clinica.dental_back_spring.enums.Role;
 import com.clinica.dental_back_spring.repository.UserRepository;
 import com.clinica.dental_back_spring.security.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -18,120 +19,135 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/auth")
-@Tag(name = "Autenticación", description = "Endpoints para registro, login y validación de usuario")
+@RequestMapping("/auth")
+@Tag(name = "Autenticación", description = "Registro, inicio de sesión y datos del usuario autenticado")
 public class AuthController {
 
-    private final UserRepository userRepo;
+    private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
-    public AuthController(UserRepository userRepo, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
-        this.userRepo = userRepo;
+    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
+        this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
     }
 
     // ==========================================================
-    // 🩺 Registro de nuevo paciente
+    // 🔹 POST /auth/register-patient
     // ==========================================================
-    @Operation(
-            summary = "Registrar nuevo paciente",
-            description = "Crea una cuenta de usuario con rol PACIENTE usando email y contraseña.",
-            requestBody = @RequestBody(
-                    required = true,
-                    description = "Datos del nuevo usuario",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = Map.class),
-                            examples = @ExampleObject(value = "{\"email\": \"paciente@correo.com\", \"password\": \"123456\"}")
-                    )
-            ),
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Paciente creado correctamente",
-                            content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(value = "{\"message\": \"created\"}"))),
-                    @ApiResponse(responseCode = "400", description = "Email ya registrado",
-                            content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(value = "{\"message\": \"Email already exists\"}")))
-            }
-    )
+    @Operation(summary = "Registrar nuevo paciente")
+    @ApiResponse(responseCode = "200", description = "Paciente registrado correctamente")
+    @ApiResponse(responseCode = "400", description = "El email ya está registrado", content = @Content)
     @PostMapping("/register-patient")
-    public ResponseEntity<?> register(@RequestBody Map<String, String> body) {
-        String email = body.get("email");
-        String password = body.get("password");
-        if (userRepo.findByEmail(email).isPresent()) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
+        String email = request.getEmail();
+        String password = request.getPassword();
+
+        if (userRepository.findByEmail(email).isPresent()) {
             return ResponseEntity.badRequest().body(Map.of("message", "Email already exists"));
         }
-        User u = User.builder()
+
+        User user = User.builder()
                 .email(email)
                 .password(passwordEncoder.encode(password))
                 .role(Role.PACIENTE)
                 .active(true)
                 .build();
-        userRepo.save(u);
+
+        userRepository.save(user);
+
         return ResponseEntity.ok(Map.of("message", "created"));
     }
 
     // ==========================================================
-    // 🔐 Login
+    // 🔹 POST /auth/login
     // ==========================================================
-    @Operation(
-            summary = "Iniciar sesión",
-            description = "Autentica un usuario mediante email y contraseña. Devuelve un token JWT si las credenciales son válidas.",
-            requestBody = @RequestBody(
-                    required = true,
-                    description = "Credenciales del usuario",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{\"email\": \"paciente@correo.com\", \"password\": \"123456\"}")
-                    )
-            ),
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Login exitoso",
-                            content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(value = "{\"token\": \"jwt-token-generado\"}"))),
-                    @ApiResponse(responseCode = "401", description = "Credenciales inválidas",
-                            content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(value = "{\"message\": \"invalid credentials\"}")))
-            }
-    )
+    @Operation(summary = "Iniciar sesión")
+    @ApiResponse(responseCode = "200", description = "Inicio de sesión correcto", content = @Content(
+            schema = @Schema(example = "{\"token\": \"jwt_token_aquí\"}")
+    ))
+    @ApiResponse(responseCode = "401", description = "Credenciales inválidas", content = @Content)
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String,String> body) {
-        String email = body.get("email");
-        String password = body.get("password");
-        return userRepo.findByEmail(email).map(user -> {
-            if (!passwordEncoder.matches(password, user.getPassword())) {
-                return ResponseEntity.status(401).body(Map.of("message", "invalid credentials"));
-            }
-            String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name(), user.getId());
-            return ResponseEntity.ok(Map.of("token", token));
-        }).orElse(ResponseEntity.status(401).body(Map.of("message", "invalid credentials")));
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+        String email = request.getEmail();
+        String password = request.getPassword();
+
+        return userRepository.findByEmail(email)
+                .map(user -> {
+                    if (!passwordEncoder.matches(password, user.getPassword())) {
+                        return ResponseEntity.status(401).body(Map.of("message", "invalid credentials"));
+                    }
+
+                    String token = jwtUtil.generateToken(
+                            user.getEmail(),
+                            user.getRole().name(),
+                            user.getId()
+                    );
+
+                    return ResponseEntity.ok(Map.of("token", token));
+                })
+                .orElse(ResponseEntity.status(401).body(Map.of("message", "invalid credentials")));
     }
 
     // ==========================================================
-    // 👤 Obtener datos del usuario autenticado
+    // 🔹 GET /auth/me
     // ==========================================================
-    @Operation(
-            summary = "Obtener información del usuario autenticado",
-            description = "Devuelve la información contenida en el token JWT actual.",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Datos del usuario extraídos del token",
-                            content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(value = "{\"email\": \"paciente@correo.com\", \"role\": \"PACIENTE\", \"userId\": 1}"))),
-                    @ApiResponse(responseCode = "401", description = "Token ausente o inválido")
-            }
-    )
+    @Operation(summary = "Obtener datos del usuario autenticado")
+    @ApiResponse(responseCode = "200", description = "Datos obtenidos correctamente")
+    @ApiResponse(responseCode = "401", description = "Token inválido o ausente", content = @Content)
     @GetMapping("/me")
     public ResponseEntity<?> me(@RequestHeader("Authorization") String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(401).body(Map.of("message", "missing or invalid token"));
         }
+
         String token = authHeader.substring(7);
-        var claims = jwtUtil.extractAllClaims(token);
-        return ResponseEntity.ok(Map.of(
-                "email", claims.getSubject(),
-                "role", claims.get("role"),
-                "userId", claims.get("userId")
-        ));
+
+        try {
+            var claims = jwtUtil.extractAllClaims(token);
+            return ResponseEntity.ok(Map.of(
+                    "email", claims.getSubject(),
+                    "role", claims.get("role"),
+                    "userId", claims.get("userId")
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body(Map.of("message", "invalid token"));
+        }
+    }
+
+    // ==========================================================
+    // 🔹 DTOs internos
+    // ==========================================================
+    public static class RegisterRequest {
+        @Email(message = "Debe ser un email válido")
+        @NotBlank(message = "El email es obligatorio")
+        private String email;
+
+        @NotBlank(message = "La contraseña es obligatoria")
+        private String password;
+
+        // Getters y setters
+        public String getEmail() { return email; }
+        public void setEmail(String email) { this.email = email; }
+        public String getPassword() { return password; }
+        public void setPassword(String password) { this.password = password; }
+    }
+
+    public static class LoginRequest {
+        @Email(message = "Debe ser un email válido")
+        @NotBlank(message = "El email es obligatorio")
+        private String email;
+
+        @NotBlank(message = "La contraseña es obligatoria")
+        private String password;
+
+        // Getters y setters
+        public String getEmail() { return email; }
+        public void setEmail(String email) { this.email = email; }
+        public String getPassword() { return password; }
+        public void setPassword(String password) { this.password = password; }
     }
 }
+
 

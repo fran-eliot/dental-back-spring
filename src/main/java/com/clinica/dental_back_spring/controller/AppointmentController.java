@@ -2,13 +2,11 @@ package com.clinica.dental_back_spring.controller;
 
 import com.clinica.dental_back_spring.dto.CreateAppointmentRequest;
 import com.clinica.dental_back_spring.entity.Appointment;
+import com.clinica.dental_back_spring.enums.AppointmentStatus;
 import com.clinica.dental_back_spring.service.AppointmentService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -17,10 +15,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
-
 @RestController
-@RequestMapping("/api/v1/appointments")
-@Tag(name = "Appointments", description = "Gestión de citas médicas (reservas, estados, cancelaciones, etc.)")
+@RequestMapping("/appointments")
+@Tag(name = "Citas", description = "Gestión de citas de pacientes y profesionales")
 public class AppointmentController {
 
     private final AppointmentService appointmentService;
@@ -30,112 +27,79 @@ public class AppointmentController {
     }
 
     // ==========================================================
-    // 🩺 Crear una nueva cita
+    // 🩺 POST /appointments → Crear cita
     // ==========================================================
-    @Operation(
-            summary = "Crear una cita",
-            description = "Crea una nueva cita asignando un paciente, profesional, tratamiento y slot disponibles. "
-                    + "Si el slot ya está ocupado, devuelve un error 409 (Conflict)."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Cita creada correctamente",
-                    content = @Content(schema = @Schema(implementation = Appointment.class))),
-            @ApiResponse(responseCode = "400", description = "Datos inválidos en la solicitud",
-                    content = @Content(schema = @Schema(example = "{\"message\": \"Patient not found\"}"))),
-            @ApiResponse(responseCode = "409", description = "El slot ya está reservado",
-                    content = @Content(schema = @Schema(example = "{\"message\": \"Slot already booked\"}"))),
-            @ApiResponse(responseCode = "500", description = "Error interno del servidor")
-    })
+    @Operation(summary = "Crear una cita", description = "Crea una nueva cita asociada a un paciente, profesional y tratamiento.")
+    @ApiResponse(responseCode = "201", description = "Cita creada correctamente")
+    @ApiResponse(responseCode = "400", description = "Datos inválidos o conflicto de horario", content = @Content)
     @PostMapping
-    public ResponseEntity<?> create(@Valid @RequestBody
-                                        @Parameter(description = "Datos para la creación de la cita") CreateAppointmentRequest req) {
+    public ResponseEntity<?> create(@Valid @RequestBody CreateAppointmentRequest req) {
         try {
             Appointment created = appointmentService.createAppointment(req);
-            return ResponseEntity.ok(created);
+            return ResponseEntity.status(201).body(created);
         } catch (IllegalStateException e) {
             return ResponseEntity.status(409).body(Map.of("message", e.getMessage()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("message", "internal error"));
         }
     }
 
     // ==========================================================
-    // 👤 Listar citas por paciente
+    // 👤 GET /appointments/by-patient/:id → Listar por paciente
     // ==========================================================
-    @Operation(
-            summary = "Obtener las citas de un paciente",
-            description = "Devuelve todas las citas asociadas a un paciente dado su ID."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Citas encontradas",
-                    content = @Content(schema = @Schema(implementation = Appointment.class))),
-            @ApiResponse(responseCode = "404", description = "Paciente no encontrado")
-    })
+    @Operation(summary = "Listar citas por paciente")
     @GetMapping("/by-patient/{patientId}")
-    public ResponseEntity<List<Appointment>> byPatient(
-            @Parameter(description = "ID del paciente", example = "1") @PathVariable Long patientId) {
+    public ResponseEntity<List<Appointment>> getByPatient(@PathVariable Long patientId) {
         return ResponseEntity.ok(appointmentService.getAppointmentsByPatient(patientId));
     }
 
     // ==========================================================
-    // 👨‍⚕️ Listar citas por profesional
+    // 👨‍⚕️ GET /appointments/by-professional/:id → Listar por profesional
     // ==========================================================
-    @Operation(
-            summary = "Obtener las citas de un profesional",
-            description = "Devuelve todas las citas asignadas a un profesional específico."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Citas encontradas",
-                    content = @Content(schema = @Schema(implementation = Appointment.class))),
-            @ApiResponse(responseCode = "404", description = "Profesional no encontrado")
-    })
+    @Operation(summary = "Listar citas por profesional")
     @GetMapping("/by-professional/{professionalId}")
-    public ResponseEntity<List<Appointment>> byProfessional(
-            @Parameter(description = "ID del profesional", example = "3") @PathVariable Long professionalId) {
+    public ResponseEntity<List<Appointment>> getByProfessional(@PathVariable Long professionalId) {
         return ResponseEntity.ok(appointmentService.getAppointmentsByProfessional(professionalId));
     }
 
     // ==========================================================
-    // 🔁 Actualizar estado de cita
+    // 🔁 PATCH /appointments/:id/status → Cambiar estado
     // ==========================================================
-    @Operation(
-            summary = "Actualizar el estado de una cita",
-            description = "Permite cambiar el estado de una cita (Pendiente, Confirmada, Realizada, Cancelada, etc.)."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Estado actualizado correctamente",
-                    content = @Content(schema = @Schema(implementation = Appointment.class))),
-            @ApiResponse(responseCode = "404", description = "Cita no encontrada")
-    })
-    @PutMapping("/{appointmentId}/status")
-    public ResponseEntity<Appointment> updateStatus(
-            @Parameter(description = "ID de la cita", example = "5") @PathVariable Long appointmentId,
-            @Parameter(description = "Nuevo estado", example = "CONFIRMADA") @RequestParam String status) {
-        return ResponseEntity.ok(
-                appointmentService.updateStatus(appointmentId,
-                        com.clinica.dental_back_spring.enums.AppointmentStatus.valueOf(status.toUpperCase()))
-        );
+    @Operation(summary = "Actualizar estado de cita")
+    @PatchMapping("/{appointmentId}/status")
+    public ResponseEntity<?> updateStatus(
+            @PathVariable Long appointmentId,
+            @RequestBody Map<String, String> body
+    ) {
+        try {
+            String newStatus = body.get("status");
+            AppointmentStatus status = AppointmentStatus.fromString(newStatus);
+            Appointment updated = appointmentService.updateStatus(appointmentId, status);
+            return ResponseEntity.ok(updated);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 
     // ==========================================================
-    // ❌ Cancelar cita
+    // ❌ DELETE /appointments/:id → Cancelar cita
     // ==========================================================
-    @Operation(
-            summary = "Cancelar una cita",
-            description = "Marca una cita como cancelada y permite indicar el motivo de la cancelación."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Cita cancelada correctamente",
-                    content = @Content(schema = @Schema(implementation = Appointment.class))),
-            @ApiResponse(responseCode = "404", description = "Cita no encontrada")
-    })
-    @PutMapping("/{appointmentId}/cancel")
-    public ResponseEntity<Appointment> cancel(
-            @Parameter(description = "ID de la cita", example = "10") @PathVariable Long appointmentId,
-            @Parameter(description = "Motivo de la cancelación") @RequestParam(required = false) String reason) {
-        return ResponseEntity.ok(appointmentService.cancelAppointment(appointmentId, reason));
+    @Operation(summary = "Cancelar cita", description = "Marca una cita como cancelada y guarda la razón de la cancelación.")
+    @ApiResponse(responseCode = "200", description = "Cita cancelada correctamente")
+    @ApiResponse(responseCode = "404", description = "Cita no encontrada", content = @Content)
+    @DeleteMapping("/{appointmentId}")
+    public ResponseEntity<?> cancelAppointment(
+            @PathVariable Long appointmentId,
+            @RequestBody(required = false) Map<String, String> body
+    ) {
+        String reason = (body != null) ? body.getOrDefault("reason", "Sin motivo especificado") : "Sin motivo especificado";
+        try {
+            Appointment cancelled = appointmentService.cancelAppointment(appointmentId, reason);
+            return ResponseEntity.ok(cancelled);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(Map.of("message", e.getMessage()));
+        }
     }
 }
+
 

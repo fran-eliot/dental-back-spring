@@ -7,6 +7,8 @@ import org.springframework.stereotype.Component;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 @Component
 public class JwtUtil {
@@ -14,22 +16,23 @@ public class JwtUtil {
     @Value("${jwt.secret}")
     private String secret;
 
-    @Value("${jwt.expiration}")
+    @Value("${jwt.expiration::86400000}") // 24h por defecto
     private long expiration;
 
     private Key getSigningKey() {
+
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    public String generateToken(String username, String role, Long userId) {
-        Date now = new Date();
-        Date exp = new Date(now.getTime() + expiration);
+    public String generateToken(String email, String role, Long userId) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", role);
+        claims.put("userId", userId);
         return Jwts.builder()
-                .setSubject(username)
-                .claim("role", role)
-                .claim("userId", userId)
-                .setIssuedAt(now)
-                .setExpiration(exp)
+                .setClaims(claims)
+                .setSubject(email)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -42,18 +45,13 @@ public class JwtUtil {
                 .getBody();
     }
 
-    public boolean isTokenValid(String token, String username) {
-        try {
-            final String sub = extractAllClaims(token).getSubject();
-            return sub.equals(username) && !isTokenExpired(token);
-        } catch (JwtException | IllegalArgumentException ex) {
-            return false;
-        }
+    public boolean validateToken(String token, String email) {
+        final String username = extractAllClaims(token).getSubject();
+        return username.equals(email) && !isTokenExpired(token);
     }
 
-    public boolean isTokenExpired(String token) {
-        Date expiration = extractAllClaims(token).getExpiration();
-        return expiration.before(new Date());
+    private boolean isTokenExpired(String token) {
+        return extractAllClaims(token).getExpiration().before(new Date());
     }
 }
 
