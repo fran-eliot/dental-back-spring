@@ -1,5 +1,6 @@
 package com.clinica.dental_back_spring.dto;
 
+import com.clinica.dental_back_spring.enums.StatusAvailability;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -28,7 +29,7 @@ public class CreateAvailabilityRequest {
 
     @NotBlank(message="Debe indicar el estado de la disponibilidad")
     @Schema(description = "Estado de la disponibilidad", example = "libre")
-    private String status;
+    private StatusAvailability status;
 
     @NotNull(message="El ID del slot es obligatorio")
     @Schema(description="ID del Slot", example = "3")

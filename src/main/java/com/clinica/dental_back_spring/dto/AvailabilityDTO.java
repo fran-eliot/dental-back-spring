@@ -1,9 +1,8 @@
 package com.clinica.dental_back_spring.dto;
 
+import com.clinica.dental_back_spring.enums.StatusAvailability;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,7 +28,7 @@ public class AvailabilityDTO {
     private LocalDate date;
 
     @Schema(description = "Estado actual de la disponibilidad", example = "libre")
-    private String status;
+    private StatusAvailability status;
 
     @Schema(description="ID del slot", example = "3")
     private Long slotId;

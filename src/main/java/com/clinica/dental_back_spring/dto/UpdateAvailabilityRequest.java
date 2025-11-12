@@ -27,7 +27,7 @@ public class UpdateAvailabilityRequest {
     private LocalDate date;
 
     @Schema(description = "Estado de la disponibilidad", example = "libre")
-    private String status;
+    private StatusAvailability status;
 
     @Schema(description="ID del slot", example = "3")
     private Long slotId;

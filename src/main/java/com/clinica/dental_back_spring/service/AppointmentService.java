@@ -1,16 +1,12 @@
 package com.clinica.dental_back_spring.service;
 
-import com.clinica.dental_back_spring.entity.Appointment;
-import com.clinica.dental_back_spring.entity.Patient;
-import com.clinica.dental_back_spring.entity.*;
-import com.clinica.dental_back_spring.repository.*;
-import com.clinica.dental_back_spring.repository.AppointmentRepository;
-import com.clinica.dental_back_spring.repository.PatientRepository;
 import com.clinica.dental_back_spring.dto.CreateAppointmentRequest;
+import com.clinica.dental_back_spring.entity.*;
 import com.clinica.dental_back_spring.enums.AppointmentStatus;
 import com.clinica.dental_back_spring.enums.CreatedBy;
+import com.clinica.dental_back_spring.repository.*;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,48 +14,47 @@ import java.util.List;
 @Service
 public class AppointmentService {
 
+    private final AppointmentRepository appointmentRepository;
     private final SlotRepository slotRepository;
     private final PatientRepository patientRepository;
-    private final TreatmentRepository treatmentRepository;
     private final ProfessionalRepository professionalRepository;
-    private final AppointmentRepository appointmentRepository;
+    private final TreatmentRepository treatmentRepository;
 
     public AppointmentService(
+            AppointmentRepository appointmentRepository,
             SlotRepository slotRepository,
             PatientRepository patientRepository,
             ProfessionalRepository professionalRepository,
-            TreatmentRepository treatmentRepository,
-            AppointmentRepository appointmentRepository
+            TreatmentRepository treatmentRepository
     ) {
+        this.appointmentRepository = appointmentRepository;
         this.slotRepository = slotRepository;
         this.patientRepository = patientRepository;
         this.professionalRepository = professionalRepository;
         this.treatmentRepository = treatmentRepository;
-        this.appointmentRepository = appointmentRepository;
     }
 
     // ==========================================================
-    // 🩺 Crear una cita
+    // 🩺 CREAR CITA
     // ==========================================================
     @Transactional
     public Appointment createAppointment(CreateAppointmentRequest req) {
-
         Slot slot = slotRepository.findById(req.getSlotId())
-                .orElseThrow(() -> new IllegalArgumentException("Slot not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Slot no encontrado"));
 
         long activeCount = appointmentRepository.countBySlotIdAndStatusNot(slot.getId(), AppointmentStatus.CANCELADA);
         if (activeCount > 0) {
-            throw new IllegalStateException("Slot already booked");
+            throw new IllegalStateException("El slot ya está reservado");
         }
 
         Patient patient = patientRepository.findById(req.getPatientId())
-                .orElseThrow(() -> new IllegalArgumentException("Patient not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Paciente no encontrado"));
 
         Professional professional = professionalRepository.findById(req.getProfessionalId())
-                .orElseThrow(() -> new IllegalArgumentException("Professional not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Profesional no encontrado"));
 
         Treatment treatment = treatmentRepository.findById(req.getTreatmentId())
-                .orElseThrow(() -> new IllegalArgumentException("Treatment not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Tratamiento no encontrado"));
 
         Appointment ap = Appointment.builder()
                 .slot(slot)
@@ -76,54 +71,55 @@ public class AppointmentService {
     }
 
     // ==========================================================
-    // 👤 Obtener citas de un paciente
+    // 👤 CITAS POR PACIENTE
     // ==========================================================
     public List<Appointment> getAppointmentsByPatient(Long patientId) {
         return appointmentRepository.findByPatientId(patientId);
     }
 
     // ==========================================================
-    // 👨‍⚕️ Obtener citas de un profesional
+    // 👨‍⚕️ CITAS POR PROFESIONAL
     // ==========================================================
     public List<Appointment> getAppointmentsByProfessional(Long professionalId) {
         return appointmentRepository.findByProfessionalId(professionalId);
     }
 
     // ==========================================================
-    // 🔁 Actualizar estado de cita
+    // 🔁 ACTUALIZAR ESTADO
     // ==========================================================
     @Transactional
     public Appointment updateStatus(Long appointmentId, AppointmentStatus newStatus) {
         Appointment ap = appointmentRepository.findById(appointmentId)
-                .orElseThrow(() -> new IllegalArgumentException("Appointment not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Cita no encontrada"));
 
         ap.setStatus(newStatus);
         return appointmentRepository.save(ap);
     }
 
     // ==========================================================
-    // ❌ Cancelar cita
+    // ❌ CANCELAR CITA
     // ==========================================================
     @Transactional
     public Appointment cancelAppointment(Long appointmentId, String reason) {
         Appointment ap = appointmentRepository.findById(appointmentId)
-                .orElseThrow(() -> new IllegalArgumentException("Appointment not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Cita no encontrada"));
 
         ap.setStatus(AppointmentStatus.CANCELADA);
-        ap.setNotes(reason);
+        ap.setCancellationReason(reason);
         return appointmentRepository.save(ap);
     }
 
     // ==========================================================
-    // 🔍 Auxiliar para convertir el campo createdBy
+    // 🧠 Auxiliar - Parseo de CreatedBy
     // ==========================================================
     private CreatedBy parseCreatedBy(String createdBy) {
-        if (createdBy == null) return CreatedBy.PATIENT;
+        if (createdBy == null) return CreatedBy.ADMIN;
         try {
             return CreatedBy.valueOf(createdBy.toUpperCase());
         } catch (IllegalArgumentException e) {
-            return CreatedBy.PATIENT;
+            return CreatedBy.ADMIN;
         }
     }
 }
+
 

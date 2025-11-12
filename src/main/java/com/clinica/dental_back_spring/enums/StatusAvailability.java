@@ -1,5 +1,6 @@
 package com.clinica.dental_back_spring.enums;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum StatusAvailability {
@@ -18,13 +19,14 @@ public enum StatusAvailability {
         return value;
     }
 
-    public static StatusAvailability fromString(String status) {
-        for (StatusAvailability s : values()) {
-            if (s.value.equalsIgnoreCase(status)) {
-                return s;
+    @JsonCreator
+    public static StatusAvailability fromValue(String value) {
+        for (StatusAvailability status : values()) {
+            if (status.value.equalsIgnoreCase(value)) {
+                return status;
             }
         }
-        throw new IllegalArgumentException("Estado no válido: " + status);
+        throw new IllegalArgumentException("Estado de disponibilidad no válido: " + value);
     }
 }
 

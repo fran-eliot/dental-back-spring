@@ -10,6 +10,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -33,7 +35,7 @@ public class TreatmentDTO {
 
     @Positive(message = "El precio debe ser positivo")
     @Schema(description="Precio del tramiento en euros", example = "45.0")
-    private double price;
+    private BigDecimal price;;
 
     @Schema(description = "Visible para pacientes", example = "true")
     private boolean visible;

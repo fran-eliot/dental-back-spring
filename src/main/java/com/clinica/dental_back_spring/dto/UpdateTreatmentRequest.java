@@ -6,6 +6,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -26,7 +28,7 @@ public class UpdateTreatmentRequest {
 
     @Positive(message = "El precio debe ser positivo")
     @Schema(description="Precio del tratamiento en euros", example = "45.0")
-    private Double price;
+    private BigDecimal price;
 
     @Schema(description = "Visible para pacientes", example = "true")
     private Boolean visible;

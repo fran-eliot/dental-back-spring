@@ -17,6 +17,20 @@ public enum Role {
     public String getValue() {
         return value;
     }
+
+    @Override
+    public String toString() {
+        return value;
+    }
+
+    public static Role fromValue(String value) {
+        for (Role role : Role.values()) {
+            if (role.value.equalsIgnoreCase(value)) {
+                return role;
+            }
+        }
+        throw new IllegalArgumentException("Rol desconocido: " + value);
+    }
 }
 
 
