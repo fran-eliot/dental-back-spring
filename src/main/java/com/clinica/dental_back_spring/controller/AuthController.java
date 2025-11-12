@@ -51,7 +51,7 @@ public class AuthController {
         User user = User.builder()
                 .email(email)
                 .password(passwordEncoder.encode(password))
-                .role(Role.PACIENTE)
+                .role(Role.ROLE_PACIENTE)
                 .active(true)
                 .build();
 

@@ -23,17 +23,25 @@ public class MyUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + email));
 
         if (!user.isActive()) {
-            throw new DisabledException("User account is inactive");
+            throw new DisabledException("Cuenta de usuario inactiva");
         }
 
-        return new org.springframework.security.core.userdetails.User(
-                user.getEmail(),
-                user.getPassword(),
-                Collections.singleton(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
-        );
+        // ⚠️ MUY IMPORTANTE: prefijo "ROLE_" para que coincida con hasRole("ADMIN")
+        String roleName = user.getRole().name(); // Ej: ROLE_ADMIN
+        SimpleGrantedAuthority authority = new SimpleGrantedAuthority(roleName);
+
+        return org.springframework.security.core.userdetails.User
+                .withUsername(user.getEmail())
+                .password(user.getPassword())
+                .authorities(Collections.singleton(authority))
+                .accountExpired(false)
+                .accountLocked(false)
+                .credentialsExpired(false)
+                .disabled(!user.isActive())
+                .build();
     }
 }
 

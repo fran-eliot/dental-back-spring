@@ -3,34 +3,35 @@ package com.clinica.dental_back_spring.enums;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum Role {
-    ADMIN("admin"),
-    DENTISTA("dentista"),
-    PACIENTE("paciente");
+    ROLE_ADMIN("admin"),
+    ROLE_DENTISTA("dentista"),
+    ROLE_PACIENTE("paciente");
 
-    private final String value;
+    private final String dbValue;
 
-    Role(String value) {
-        this.value = value;
+    Role(String dbValue) {
+        this.dbValue = dbValue;
     }
 
     @JsonValue
-    public String getValue() {
-        return value;
+    public String getDbValue() {
+        return dbValue;
     }
 
     @Override
     public String toString() {
-        return value;
+        return dbValue;
     }
 
-    public static Role fromValue(String value) {
+    public static Role fromDbValue(String dbValue) {
         for (Role role : Role.values()) {
-            if (role.value.equalsIgnoreCase(value)) {
+            if (role.dbValue.equalsIgnoreCase(dbValue)) {
                 return role;
             }
         }
-        throw new IllegalArgumentException("Rol desconocido: " + value);
+        throw new IllegalArgumentException("Rol desconocido: " + dbValue);
     }
 }
+
 
 
