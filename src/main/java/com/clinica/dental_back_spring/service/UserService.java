@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -18,7 +17,8 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository,
+                       PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
@@ -28,7 +28,7 @@ public class UserService {
     // ==========================================================
     public List<UserDTO> findAll() {
         return userRepository.findAll().stream()
-                .map(u -> new UserDTO(u.getId(), u.getEmail(), u.getRole().name()))
+                .map(this::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -38,7 +38,7 @@ public class UserService {
     public UserDTO findById(Long id) {
         User u = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
-        return new UserDTO(u.getId(), u.getEmail(), u.getRole().name());
+        return toDTO(u);
     }
 
     // ==========================================================
@@ -46,10 +46,17 @@ public class UserService {
     // ==========================================================
     @Transactional
     public void updateRole(Long id, String newRole) {
+
         User u = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+
+        if (newRole == null || newRole.isBlank()) {
+            throw new IllegalArgumentException("El rol no puede estar vacío");
+        }
+
         try {
-            u.setRole(Role.valueOf(newRole.toUpperCase()));
+            Role roleEnum = Role.valueOf(newRole.toUpperCase());
+            u.setRole(roleEnum);
             userRepository.save(u);
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Rol no válido: " + newRole);
@@ -61,6 +68,7 @@ public class UserService {
     // ==========================================================
     @Transactional
     public void updatePassword(Long id, String newPassword) {
+
         User u = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
 
@@ -77,11 +85,23 @@ public class UserService {
     // ==========================================================
     @Transactional
     public void deactivate(Long id) {
+
         User u = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
 
         u.setActive(false);
         userRepository.save(u);
     }
-}
 
+    // ==========================================================
+    // 🧩 Conversión a DTO
+    // ==========================================================
+    private UserDTO toDTO(User u) {
+        return UserDTO.builder()
+                .id(u.getId())
+                .email(u.getEmail())
+                .role(u.getRole().name())   // ROLE_ADMIN, ROLE_DENTISTA, ROLE_PACIENTE
+                .active(u.isActive())
+                .build();
+    }
+}

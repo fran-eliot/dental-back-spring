@@ -1,5 +1,7 @@
 package com.clinica.dental_back_spring.controller;
 
+import com.clinica.dental_back_spring.dto.AuthResponse;
+import com.clinica.dental_back_spring.dto.UserDTO;
 import com.clinica.dental_back_spring.entity.User;
 import com.clinica.dental_back_spring.enums.Role;
 import com.clinica.dental_back_spring.repository.UserRepository;
@@ -13,6 +15,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -45,7 +48,7 @@ public class AuthController {
         String password = request.getPassword();
 
         if (userRepository.findByEmail(email).isPresent()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Email already exists"));
+            return ResponseEntity.badRequest().body(Map.of("message", "Email ya existe"));
         }
 
         User user = User.builder()
@@ -70,24 +73,50 @@ public class AuthController {
     @ApiResponse(responseCode = "401", description = "Credenciales inválidas", content = @Content)
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
-        String email = request.getEmail();
-        String password = request.getPassword();
 
-        return userRepository.findByEmail(email)
-                .map(user -> {
-                    if (!passwordEncoder.matches(password, user.getPassword())) {
-                        return ResponseEntity.status(401).body(Map.of("message", "invalid credentials"));
-                    }
+        // 1. Buscar usuario
+        User user = userRepository.findByEmail(request.getEmail()).orElse(null);
 
-                    String token = jwtUtil.generateToken(
-                            user.getEmail(),
-                            user.getRole().name(),
-                            user.getId()
-                    );
+        if (user == null) {
+            return ResponseEntity.status(401)
+                    .body(Map.of("message", "Credenciales inválidas"));
+        }
 
-                    return ResponseEntity.ok(Map.of("token", token));
-                })
-                .orElse(ResponseEntity.status(401).body(Map.of("message", "invalid credentials")));
+        // 2. Validar contraseña
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            return ResponseEntity.status(401)
+                    .body(Map.of("message", "Credenciales inválidas"));
+        }
+
+        // 3. Generar token
+        String token = jwtUtil.generateToken(
+                user.getEmail(),
+                user.getRole().name(),
+                user.getId()
+        );
+
+        // 4. Obtener professionalId si es dentista
+        Long professionalId = null;
+        if (user.getRole() == Role.ROLE_DENTISTA && user.getProfessional() != null) {
+            professionalId = user.getProfessional().getId();
+        }
+
+        // 5. Crear el UserDTO
+        UserDTO userDTO = UserDTO.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .role(user.getRole().name())
+                .active(user.isActive())
+                .build();
+
+        // 6. Crear respuesta final
+        AuthResponse response = AuthResponse.builder()
+                .token(token)
+                .user(userDTO)
+                .professionalId(professionalId)
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 
     // ==========================================================
@@ -99,20 +128,55 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<?> me(@RequestHeader("Authorization") String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return ResponseEntity.status(401).body(Map.of("message", "missing or invalid token"));
+            return ResponseEntity.status(401)
+                    .body(AuthResponse.builder()
+                            .token(null)
+                            .user(null)
+                            .professionalId(null)
+                            .build());
         }
 
         String token = authHeader.substring(7);
 
         try {
             var claims = jwtUtil.extractAllClaims(token);
-            return ResponseEntity.ok(Map.of(
-                    "email", claims.getSubject(),
-                    "role", claims.get("role"),
-                    "userId", claims.get("userId")
-            ));
+            String email = claims.getSubject();
+
+            // 1. Buscar usuario en BD
+            User user = userRepository.findByEmail(email).orElse(null);
+            if (user==null)
+                return ResponseEntity.status(401).body(Map.of("message", "Credenciales inválidas"));
+
+            // 2. Determinar professionalId si corresponde
+            Long professionalId = null;
+            if (user.getRole() == Role.ROLE_DENTISTA && user.getProfessional() != null) {
+                professionalId = user.getProfessional().getId();
+            }
+
+            // 3. Crear UserDTO
+            UserDTO userDTO = UserDTO.builder()
+                    .id(user.getId())
+                    .email(user.getEmail())
+                    .role(user.getRole().name())
+                    .active(user.isActive())
+                    .build();
+
+            // 4. Devolver AuthResponse coherente con /login (sin token)
+            return ResponseEntity.ok(
+                    AuthResponse.builder()
+                            .token(null)  // No devolvemos token en /me
+                            .user(userDTO)
+                            .professionalId(professionalId)
+                            .build()
+            );
+
         } catch (Exception e) {
-            return ResponseEntity.status(401).body(Map.of("message", "invalid token"));
+            return ResponseEntity.status(401)
+                    .body(AuthResponse.builder()
+                            .token(null)
+                            .user(null)
+                            .professionalId(null)
+                            .build());
         }
     }
 

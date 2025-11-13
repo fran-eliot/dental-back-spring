@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class AvailabilityService {
@@ -33,23 +32,22 @@ public class AvailabilityService {
     }
 
     // ==========================================================
-    // 📅 LISTAR DISPONIBILIDADES
+    // 📅 LISTAR
     // ==========================================================
     public List<AvailabilityDTO> findAll() {
         return availabilityRepository.findAll().stream()
                 .map(this::toDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public List<AvailabilityDTO> findByProfessionalAndDate(Long professionalId, LocalDate date) {
         return availabilityRepository.findByProfessionalIdAndDate(professionalId, date)
-                .stream()
-                .map(this::toDTO)
-                .collect(Collectors.toList());
+                .stream().map(this::toDTO)
+                .toList();
     }
 
     // ==========================================================
-    // 🔍 OBTENER UNA DISPONIBILIDAD
+    // 🔍 OBTENER
     // ==========================================================
     public AvailabilityDTO findById(Long id) {
         Availability a = availabilityRepository.findById(id)
@@ -62,20 +60,29 @@ public class AvailabilityService {
     // ==========================================================
     @Transactional
     public AvailabilityDTO create(CreateAvailabilityRequest req) {
+
         Professional professional = professionalRepository.findById(req.getProfessionalId())
                 .orElseThrow(() -> new IllegalArgumentException("Profesional no encontrado"));
 
         Slot slot = slotRepository.findById(req.getSlotId())
                 .orElseThrow(() -> new IllegalArgumentException("Slot no encontrado"));
 
+        // 🚫 Evitar duplicados (profesional + día + slot)
+        if (availabilityRepository.existsByProfessionalIdAndDateAndSlotId(
+                req.getProfessionalId(), req.getDate(), req.getSlotId()
+        )) {
+            throw new IllegalArgumentException("Ya existe disponibilidad para ese profesional en ese día y hora.");
+        }
+
         Availability a = Availability.builder()
                 .professional(professional)
                 .slot(slot)
                 .date(req.getDate())
-                .status(StatusAvailability.LIBRE)
+                .status(StatusAvailability.LIBRE) // siempre libre al crear
                 .build();
 
         availabilityRepository.save(a);
+
         return toDTO(a);
     }
 
@@ -87,10 +94,32 @@ public class AvailabilityService {
         Availability a = availabilityRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Disponibilidad no encontrada"));
 
-        if (req.getStatus() != null) a.setStatus(req.getStatus());
-        if (req.getDate() != null) a.setDate(req.getDate());
+        // =============================
+        // ❗ Cambiar fecha (solo si NO tiene citas)
+        // =============================
+        if (req.getDate() != null && !req.getDate().equals(a.getDate())) {
 
-        availabilityRepository.save(a);
+            if (!a.getSlot().getAppointments().isEmpty()) {
+                throw new IllegalArgumentException("No se puede cambiar la fecha porque esta disponibilidad tiene citas asociadas.");
+            }
+
+            // Evitar duplicados con nueva fecha
+            if (availabilityRepository.existsByProfessionalIdAndDateAndSlotId(
+                    a.getProfessional().getId(), req.getDate(), a.getSlot().getId()
+            )) {
+                throw new IllegalArgumentException("Ya existe una disponibilidad para ese profesional en la fecha nueva.");
+            }
+
+            a.setDate(req.getDate());
+        }
+
+        // =============================
+        // Cambiar estado (LIBRE, OCUPADO, NO_DISPONIBLE)
+        // =============================
+        if (req.getStatus() != null) {
+            a.setStatus(req.getStatus());
+        }
+
         return toDTO(a);
     }
 
@@ -102,20 +131,28 @@ public class AvailabilityService {
         Availability a = availabilityRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Disponibilidad no encontrada"));
 
+        // 🚫 No eliminar si tiene citas asociadas
+        if (!a.getSlot().getAppointments().isEmpty()) {
+            throw new IllegalArgumentException("No se puede eliminar esta disponibilidad porque tiene citas asociadas.");
+        }
+
         a.setStatus(StatusAvailability.NO_DISPONIBLE);
-        availabilityRepository.save(a);
     }
 
     // ==========================================================
-    // 🔁 Conversor a DTO
+    // 🔁 DTO
     // ==========================================================
     private AvailabilityDTO toDTO(Availability a) {
         return AvailabilityDTO.builder()
                 .id(a.getId())
+                .professionalId(a.getProfessional().getId())
                 .date(a.getDate())
                 .status(a.getStatus())
-                .professionalId(a.getProfessional().getId())
                 .slotId(a.getSlot().getId())
+                .startTime(a.getSlot().getStartTime())
+                .endTime(a.getSlot().getEndTime())
+                .period(a.getSlot().getPeriod())
                 .build();
     }
 }
+

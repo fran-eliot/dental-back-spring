@@ -5,6 +5,7 @@ import com.clinica.dental_back_spring.enums.AppointmentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -14,9 +15,15 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
     List<Appointment> findByProfessionalId(Long professionalId);
 
-    List<Appointment> findByProfessionalIdAndDateBetween(Long professionalId, java.time.LocalDateTime from, java.time.LocalDateTime to);
+    List<Appointment> findByProfessionalIdAndStatusNot(Long professionalId, AppointmentStatus status);
 
-    // Cuenta citas activas/no canceladas para un slot
+    List<Appointment> findByProfessionalIdAndDateBetween(
+            Long professionalId,
+            LocalDateTime from,
+            LocalDateTime to
+    );
+
     long countBySlotIdAndStatusNot(Long slotId, AppointmentStatus excludedStatus);
 }
+
 

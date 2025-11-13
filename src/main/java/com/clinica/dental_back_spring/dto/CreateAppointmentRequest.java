@@ -1,5 +1,6 @@
 package com.clinica.dental_back_spring.dto;
 
+import com.clinica.dental_back_spring.enums.CreatedBy;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -32,5 +33,5 @@ public class CreateAppointmentRequest {
             description = "Usuario que crea la cita (admin o professional)",
             example = "admin"
     )
-    private String createdBy;
+    private CreatedBy createdBy;
 }

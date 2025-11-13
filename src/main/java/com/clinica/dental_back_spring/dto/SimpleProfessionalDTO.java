@@ -1,5 +1,6 @@
 package com.clinica.dental_back_spring.dto;
 
+import com.clinica.dental_back_spring.entity.Professional;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -19,4 +20,13 @@ public class SimpleProfessionalDTO {
 
     @Schema(description = "Apellido del profesional", example = "Gómez")
     private String lastName;
+
+    public static SimpleProfessionalDTO from(Professional p) {
+        if (p == null) return null;
+        return SimpleProfessionalDTO.builder()
+                .id(p.getId())
+                .name(p.getName())
+                .lastName(p.getLastName())
+                .build();
+    }
 }

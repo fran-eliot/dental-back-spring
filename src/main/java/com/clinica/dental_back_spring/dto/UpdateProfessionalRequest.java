@@ -20,7 +20,7 @@ public class UpdateProfessionalRequest {
     private String nif;
 
     @Schema(description="Número de licencia del profesional",example = "DENT-001")
-    private String licence;
+    private String license;
 
     @Schema(description="Nombre del profesional", example = "Laura")
     private String name;

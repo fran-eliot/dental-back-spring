@@ -22,7 +22,7 @@ public class ProfessionalDTO {
     private String nif;
 
     @Schema(description="Número de licencia del profesional",example = "DENT-001")
-    private String licence;
+    private String license;
 
     @Schema(description="Nombre del profesional", example = "Laura")
     private String name;
@@ -43,5 +43,8 @@ public class ProfessionalDTO {
 
     @Schema(description="Indica si el profesional está activo",example = "true")
     private boolean active;
+
+    @Schema(description = "Identificador usuario", example = "5")
+    private Long userId;
 }
 

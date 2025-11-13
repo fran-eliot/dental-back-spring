@@ -1,5 +1,6 @@
 package com.clinica.dental_back_spring.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,8 +23,8 @@ public class Professional {
     @Column(name = "nif_professionals")
     private String nif;
 
-    @Column(name ="licence_number_professionals")
-    private String licence;
+    @Column(name ="license_number_professionals")
+    private String license;
 
     @Column(name = "name_professionals")
     private String name;
@@ -45,7 +46,7 @@ public class Professional {
 
     // Relación opcional con User (1-1)
     @OneToOne
-    @JoinColumn(name = "id_users")
+    @JoinColumn(name = "user_id", referencedColumnName = "id_users" )
     private User user;
 
     @OneToMany(mappedBy = "professional", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

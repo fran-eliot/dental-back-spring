@@ -11,10 +11,18 @@ import java.util.List;
 @Repository
 public interface ProfessionalRepository extends JpaRepository<Professional, Long> {
 
-    @Query("SELECT p FROM Professional p WHERE " +
-            "LOWER(p.name) LIKE LOWER(CONCAT('%', :query, '%')) " +
-            "OR LOWER(p.lastName) LIKE LOWER(CONCAT('%', :query, '%')) " +
-            "OR LOWER(p.licence) LIKE LOWER(CONCAT('%', :query, '%'))")
+    @Query("""
+            SELECT p FROM Professional p 
+            WHERE p.active = true AND (
+                LOWER(p.name) LIKE LOWER(CONCAT('%', :query, '%')) OR
+                LOWER(p.lastName) LIKE LOWER(CONCAT('%', :query, '%')) OR
+                LOWER(p.license) LIKE LOWER(CONCAT('%', :query, '%')) OR
+                LOWER(p.email) LIKE LOWER(CONCAT('%', :query, '%')) OR
+                LOWER(p.nif) LIKE LOWER(CONCAT('%', :query, '%')) OR
+                LOWER(p.phone) LIKE LOWER(CONCAT('%', :query, '%'))
+            )
+            ORDER BY p.lastName ASC, p.name ASC
+            """)
     List<Professional> search(@Param("query") String query);
 }
 

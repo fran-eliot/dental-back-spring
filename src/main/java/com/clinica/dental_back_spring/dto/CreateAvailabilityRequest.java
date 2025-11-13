@@ -22,14 +22,10 @@ public class CreateAvailabilityRequest {
     @Schema(description="ID del profesional", example = "3")
     private Long professionalId;
 
-    @NotNull
+    @NotNull(message="La fecha es obligatoria")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     @Schema(description = "Fecha de la disponibilidad", example = "2025-11-10")
     private LocalDate date;
-
-    @NotBlank(message="Debe indicar el estado de la disponibilidad")
-    @Schema(description = "Estado de la disponibilidad", example = "libre")
-    private StatusAvailability status;
 
     @NotNull(message="El ID del slot es obligatorio")
     @Schema(description="ID del Slot", example = "3")

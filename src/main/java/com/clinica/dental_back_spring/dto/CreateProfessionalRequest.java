@@ -23,7 +23,7 @@ public class CreateProfessionalRequest {
 
     @NotBlank(message = "El número de licencia es obligatorio")
     @Schema(description="Número de licencia del profesional", example = "DENT-001")
-    private String licence;
+    private String license;
 
     @NotBlank(message = "El nombre es obligatorio")
     @Schema(description="Nombre del profesional", example = "Laura")
@@ -45,8 +45,5 @@ public class CreateProfessionalRequest {
     @Schema(description="Sala asignada al profesional", example = "Sala 2")
     private String room;
 
-    @NotNull(message="Debe indicar si el profesional está activo")
-    @Schema(description = "Indica si el Profesional está activo", example = "true")
-    private boolean active;
 }
 

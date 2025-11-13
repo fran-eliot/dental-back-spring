@@ -26,5 +26,8 @@ public class UserDTO {
     @NotBlank(message="El rol del usuario es obligatorio")
     @Schema(description="Rol del usuario",example="admin")
     private String role;
+
+    @Schema(description="Indica si el usuario está activo",example="true")
+    private boolean active;
 }
 

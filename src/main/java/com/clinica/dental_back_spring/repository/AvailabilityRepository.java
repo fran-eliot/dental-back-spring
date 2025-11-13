@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface AvailabilityRepository extends JpaRepository<Availability, Long> {
@@ -13,6 +14,11 @@ public interface AvailabilityRepository extends JpaRepository<Availability, Long
     List<Availability> findByProfessionalId(Long professionalId);
 
     List<Availability> findByProfessionalIdAndDate(Long professionalId, LocalDate date);
+
+    Optional<Availability> findBySlotIdAndProfessionalId(Long slotId, Long professionalId);
+
+    boolean existsByProfessionalIdAndDateAndSlotId(Long professionalId, LocalDate date, Long slotId);
+
 }
 
 

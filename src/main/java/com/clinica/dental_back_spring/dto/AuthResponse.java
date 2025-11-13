@@ -20,5 +20,8 @@ public class AuthResponse {
             example = "{ \"id\": 1, \"email\": \"admin@smyle.es\", \"role\": \"admin\" }"
     )
     private UserDTO user;
+
+    @Schema(description = "ID del profesional asociado (solo si es dentista)")
+    private Long professionalId;
 }
 

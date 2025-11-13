@@ -24,6 +24,7 @@ public class TreatmentService {
     // 🔍 LISTAR O FILTRAR TRATAMIENTOS
     // ==========================================================
     public List<TreatmentDTO> findAll(String query, Boolean visibleOnly) {
+
         List<Treatment> list = treatmentRepository.findFiltered(query, visibleOnly);
         return list.stream()
                 .map(this::toDTO)

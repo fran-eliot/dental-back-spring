@@ -1,5 +1,6 @@
 package com.clinica.dental_back_spring.dto;
 
+import com.clinica.dental_back_spring.entity.Treatment;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -15,4 +16,12 @@ public class SimpleTreatmentDTO {
 
     @Schema(description = "Nombre del tratamiento", example = "Limpieza dental")
     private String name;
+
+    public static SimpleTreatmentDTO from(Treatment t) {
+        if (t == null) return null;
+        return SimpleTreatmentDTO.builder()
+                .id(t.getId())
+                .name(t.getName())
+                .build();
+    }
 }

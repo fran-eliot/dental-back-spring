@@ -30,6 +30,9 @@ public class User {
     @Column(name ="is_active_users")
     private boolean active = true;
 
+    @OneToOne(mappedBy = "user")
+    private Professional professional;
+
 
 }
 

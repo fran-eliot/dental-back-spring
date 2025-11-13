@@ -40,8 +40,9 @@ public class AvailabilityController {
             @RequestParam(required = false) String date
     ) {
         if (professionalId != null && date != null) {
-            LocalDate parsedDate = LocalDate.parse(date);
-            return ResponseEntity.ok(availabilityService.findByProfessionalAndDate(professionalId, parsedDate));
+            return ResponseEntity.ok(
+                    availabilityService.findByProfessionalAndDate(professionalId, LocalDate.parse(date))
+            );
         }
         return ResponseEntity.ok(availabilityService.findAll());
     }
@@ -93,7 +94,7 @@ public class AvailabilityController {
             AvailabilityDTO updated = availabilityService.update(id, req);
             return ResponseEntity.ok(updated);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(404).body(Map.of("message", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
 

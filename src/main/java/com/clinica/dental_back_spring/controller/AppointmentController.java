@@ -1,7 +1,8 @@
 package com.clinica.dental_back_spring.controller;
 
+import com.clinica.dental_back_spring.dto.AppointmentDTO;
 import com.clinica.dental_back_spring.dto.CreateAppointmentRequest;
-import com.clinica.dental_back_spring.entity.Appointment;
+import com.clinica.dental_back_spring.dto.UpdateAppointmentRequest;
 import com.clinica.dental_back_spring.enums.AppointmentStatus;
 import com.clinica.dental_back_spring.service.AppointmentService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,13 +32,11 @@ public class AppointmentController {
     // ==========================================================
     // 🩺 POST /appointments → Crear cita
     // ==========================================================
-    @Operation(summary = "Crear una cita", description = "Crea una nueva cita asociada a un paciente, profesional y tratamiento.")
-    @ApiResponse(responseCode = "201", description = "Cita creada correctamente")
-    @ApiResponse(responseCode = "400", description = "Datos inválidos o conflicto de horario", content = @Content)
+    @Operation(summary = "Crear una cita")
     @PostMapping
     public ResponseEntity<?> create(@Valid @RequestBody CreateAppointmentRequest req) {
         try {
-            Appointment created = appointmentService.createAppointment(req);
+            AppointmentDTO created = appointmentService.createAppointment(req);
             return ResponseEntity.status(201).body(created);
         } catch (IllegalStateException e) {
             return ResponseEntity.status(409).body(Map.of("message", e.getMessage()));
@@ -47,20 +46,20 @@ public class AppointmentController {
     }
 
     // ==========================================================
-    // 👤 GET /appointments/by-patient/:id → Listar por paciente
+    // 👤 GET /appointments/by-patient/:id
     // ==========================================================
     @Operation(summary = "Listar citas por paciente")
     @GetMapping("/by-patient/{patientId}")
-    public ResponseEntity<List<Appointment>> getByPatient(@PathVariable Long patientId) {
+    public ResponseEntity<List<AppointmentDTO>> getByPatient(@PathVariable Long patientId) {
         return ResponseEntity.ok(appointmentService.getAppointmentsByPatient(patientId));
     }
 
     // ==========================================================
-    // 👨‍⚕️ GET /appointments/by-professional/:id → Listar por profesional
+    // 👨‍⚕️ GET /appointments/by-professional/:id
     // ==========================================================
     @Operation(summary = "Listar citas por profesional")
     @GetMapping("/by-professional/{professionalId}")
-    public ResponseEntity<List<Appointment>> getByProfessional(@PathVariable Long professionalId) {
+    public ResponseEntity<List<AppointmentDTO>> getByProfessional(@PathVariable Long professionalId) {
         return ResponseEntity.ok(appointmentService.getAppointmentsByProfessional(professionalId));
     }
 
@@ -71,12 +70,10 @@ public class AppointmentController {
     @PatchMapping("/{appointmentId}/status")
     public ResponseEntity<?> updateStatus(
             @PathVariable Long appointmentId,
-            @RequestBody Map<String, String> body
+            @Valid @RequestBody UpdateAppointmentRequest req
     ) {
         try {
-            String newStatus = body.get("status");
-            AppointmentStatus status = AppointmentStatus.fromString(newStatus);
-            Appointment updated = appointmentService.updateStatus(appointmentId, status);
+            AppointmentDTO updated = appointmentService.updateStatus(appointmentId, req.getStatus());
             return ResponseEntity.ok(updated);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
@@ -86,22 +83,21 @@ public class AppointmentController {
     // ==========================================================
     // ❌ DELETE /appointments/:id → Cancelar cita
     // ==========================================================
-    @Operation(summary = "Cancelar cita", description = "Marca una cita como cancelada y guarda la razón de la cancelación.")
-    @ApiResponse(responseCode = "200", description = "Cita cancelada correctamente")
-    @ApiResponse(responseCode = "404", description = "Cita no encontrada", content = @Content)
+    @Operation(summary = "Cancelar cita")
     @DeleteMapping("/{appointmentId}")
     public ResponseEntity<?> cancelAppointment(
             @PathVariable Long appointmentId,
             @RequestBody(required = false) Map<String, String> body
     ) {
-        String reason = (body != null) ? body.getOrDefault("reason", "Sin motivo especificado") : "Sin motivo especificado";
+        String reason = (body != null)
+                ? body.getOrDefault("reason", "Sin motivo especificado")
+                : "Sin motivo especificado";
+
         try {
-            Appointment cancelled = appointmentService.cancelAppointment(appointmentId, reason);
+            AppointmentDTO cancelled = appointmentService.cancelAppointment(appointmentId, reason);
             return ResponseEntity.ok(cancelled);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(404).body(Map.of("message", e.getMessage()));
         }
     }
 }
-
-

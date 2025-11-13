@@ -29,14 +29,14 @@ public class ProfessionalController {
     }
 
     // ==========================================================
-    // 🔹 GET /professionals?query=
+    // 🔹 GET /professionals → Listar o buscar
     // ==========================================================
-    @Operation(summary = "Listar profesionales", description = "Devuelve todos los profesionales o filtra por nombre o especialidad/licencia.")
+    @Operation(summary = "Listar profesionales",
+            description = "Devuelve todos los profesionales o filtra por nombre, apellido o licencia.")
     @ApiResponse(responseCode = "200", description = "Listado obtenido correctamente")
     @GetMapping
     public ResponseEntity<List<ProfessionalDTO>> list(@RequestParam(required = false) String query) {
-        List<ProfessionalDTO> list = professionalService.findAll(query);
-        return ResponseEntity.ok(list);
+        return ResponseEntity.ok(professionalService.findAll(query));
     }
 
     // ==========================================================
@@ -48,15 +48,14 @@ public class ProfessionalController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getById(@PathVariable Long id) {
         try {
-            ProfessionalDTO dto = professionalService.findById(id);
-            return ResponseEntity.ok(dto);
+            return ResponseEntity.ok(professionalService.findById(id));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(404).body(Map.of("message", e.getMessage()));
         }
     }
 
     // ==========================================================
-    // 🔹 POST /professionals
+    // 🔹 POST /professionals → Crear profesional + usuario
     // ==========================================================
     @Operation(summary = "Crear profesional")
     @ApiResponse(responseCode = "201", description = "Profesional creado correctamente")
@@ -72,7 +71,7 @@ public class ProfessionalController {
     }
 
     // ==========================================================
-    // 🔹 PUT /professionals/:id
+    // 🔹 PUT /professionals/:id → Actualizar profesional
     // ==========================================================
     @Operation(summary = "Actualizar profesional")
     @ApiResponse(responseCode = "200", description = "Profesional actualizado correctamente")
@@ -83,17 +82,17 @@ public class ProfessionalController {
             @Valid @RequestBody UpdateProfessionalRequest req
     ) {
         try {
-            ProfessionalDTO updated = professionalService.update(id, req);
-            return ResponseEntity.ok(updated);
+            return ResponseEntity.ok(professionalService.update(id, req));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(404).body(Map.of("message", e.getMessage()));
         }
     }
 
     // ==========================================================
-    // 🔹 DELETE /professionals/:id (soft delete)
+    // 🔹 DELETE /professionals/:id → Soft delete
     // ==========================================================
-    @Operation(summary = "Eliminar profesional", description = "Marca un profesional como inactivo (soft delete).")
+    @Operation(summary = "Desactivar profesional",
+            description = "Marca un profesional como inactivo (soft delete). También desactiva al usuario asociado.")
     @ApiResponse(responseCode = "204", description = "Profesional desactivado correctamente")
     @ApiResponse(responseCode = "404", description = "Profesional no encontrado", content = @Content)
     @DeleteMapping("/{id}")
