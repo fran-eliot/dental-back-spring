@@ -115,7 +115,7 @@ Incluye la siguiente imagen del DER (presente en el repositorio backend):
 📸 **Diagrama ER**  
 *Ruta:* `src/docs/DER clinica_dental.png`
 
-![DER](https://github.com/fran-eliot/dental-back-spring/tree/main/src/doc/DER-clinica_dental.png)
+![DER](src/doc/DER-clinica_dental.png)
 
 ---
 # 📘 6. Backend — Arquitectura Interna
@@ -242,7 +242,7 @@ http://localhost:3000/swagger-ui/index.html
 ```
 
 ## 📸 Captura de Swagger  
-![Swagger](https://github.com/fran-eliot/dental-back-spring/tree/main/src/doc/swagger.png)
+![Swagger](src/doc/swagger.png)
 
 ---
 # 📘 12. Frontend — Angular 17
