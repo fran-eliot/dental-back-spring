@@ -242,7 +242,7 @@ http://localhost:3000/swagger-ui/index.html
 ```
 
 ## 📸 Captura de Swagger  
-![Swagger](src/doc/swagger.png)
+![Swagger](src/doc/Swagger.png)
 
 ---
 # 📘 12. Frontend — Angular 17
