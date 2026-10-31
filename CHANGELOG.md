@@ -1,5 +1,5 @@
-# Changelog
+# Historial de cambios
 
-## [Unreleased]
+## [Sin publicar]
 
-No unreleased changes documented yet.
+Aún no hay cambios sin publicar documentados.
