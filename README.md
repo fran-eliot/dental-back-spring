@@ -65,13 +65,12 @@ En nuestro caso: **fecha de nacimiento de usuarios**.
 
 ## 3.2. Instalación del Backend
 ```bash
-cd backend
 mvn clean install
 mvn spring-boot:run
 ```
 Backend disponible en:
 ```
-http://localhost:3000
+http://localhost:8080
 ```
 
 ## 3.3. Instalación del Frontend
@@ -238,7 +237,7 @@ Ejemplo documento:
 # 📘 11. Swagger — Documentación Automática
 Swagger disponible en:  
 ```
-http://localhost:3000/swagger-ui/index.html
+http://localhost:8080/swagger-ui/index.html
 ```
 
 ## 📸 Captura de Swagger  
